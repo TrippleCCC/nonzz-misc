@@ -19,11 +19,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	log.Print("Hello world sample started.")
 
+	// Creating FileServer for html, javascript, and css
 	fs := http.FileServer(http.Dir("static"))
 
-	http.Handle("/", fs)
+	// some handler that returns "Hwllo World!"
+	http.HandleFunc("/main/", handler)
 
-	//http.HandleFunc("/", handler)
+	// Sets up FileServer so html pages can access javascript and css resorces
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// When the user requests with just the domain it pulls up index.html
+	http.Handle("/", fs)
 
 	port := os.Getenv("PORT")
 	if port == "" {
