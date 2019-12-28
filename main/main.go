@@ -41,7 +41,7 @@ func (fs FileSystem) Open(path string) (http.File, error) {
 	return file, nil
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Main received a request.")
 	target := os.Getenv("TARGET")
 	if target == "" {
@@ -71,7 +71,7 @@ func main() {
 	http.Handle("/modules/", http.StripPrefix(strings.TrimRight("/modules/", "/"), modulesFileServer))
 
 	// some handler that returns "Hello World!"
-	http.HandleFunc("/main/", handler)
+	http.HandleFunc("/main/", helloWorldHandler)
 
 	// When the user requests with just the domain it pulls up index.html
 	//http.Handle("/", fs)
