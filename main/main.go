@@ -5,7 +5,41 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
+
+// Custom file system handler.
+// Look at https://gist.github.com/hauxe/f2ea1901216177ccf9550a1b8bd59178#file-http_static_correct-go
+// and https://dev.to/hauxe/golang-http-serve-static-files-correctly-2oj2
+type FileSystem struct {
+	//internal file system
+	fs http.FileSystem
+}
+
+func (fs FileSystem) Open(path string) (http.File, error) {
+	// Get file object using path
+	file, error := fs.fs.Open(path)
+	// return error if there is an error
+	if error != nil {
+		return nil, error
+	}
+
+	// get file info
+	fileInfo, error := file.Stat()
+
+	// if fileInfo is a directory
+	if fileInfo.IsDir() {
+		// get the path to the index.html inside the directory
+		// and try to find it
+		index := strings.TrimSuffix(path, "/") + "/index.html"
+
+		if _, error := fs.fs.Open(index); error != nil {
+			return nil, error
+		}
+	}
+
+	return file, nil
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Main received a request.")
@@ -17,19 +51,30 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	log.Print("Hello world sample started.")
+	log.Print("nonzz-server started.")
+
+	// Custom FileServer for Homepage
+	homeFileServer := http.FileServer(FileSystem{http.Dir("home")})
+
+	modulesFileServer := http.FileServer(FileSystem{http.Dir("modules")})
 
 	// Creating FileServer for html, javascript, and css
-	fs := http.FileServer(http.Dir("static"))
+	//fs := http.FileServer(http.Dir("static"))
 
-	// some handler that returns "Hwllo World!"
+	// handler for domain
+	http.Handle("/", homeFileServer)
+
+	// Sets up FileServer for accessing homepage
+	http.Handle("/home/", http.StripPrefix(strings.TrimRight("/home/", "/"), homeFileServer))
+
+	// Sets up FileServer for modules
+	http.Handle("/modules/", http.StripPrefix(strings.TrimRight("/modules/", "/"), modulesFileServer))
+
+	// some handler that returns "Hello World!"
 	http.HandleFunc("/main/", handler)
 
-	// Sets up FileServer so html pages can access javascript and css resorces
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-
 	// When the user requests with just the domain it pulls up index.html
-	http.Handle("/", fs)
+	//http.Handle("/", fs)
 
 	port := os.Getenv("PORT")
 	if port == "" {
