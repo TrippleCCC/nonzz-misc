@@ -56,10 +56,8 @@ func main() {
 	// Custom FileServer for Homepage
 	homeFileServer := http.FileServer(FileSystem{http.Dir("home")})
 
+	// Custom FileServer for Modules
 	modulesFileServer := http.FileServer(FileSystem{http.Dir("modules")})
-
-	// Creating FileServer for html, javascript, and css
-	//fs := http.FileServer(http.Dir("static"))
 
 	// handler for domain
 	http.Handle("/", homeFileServer)
@@ -72,9 +70,6 @@ func main() {
 
 	// some handler that returns "Hello World!"
 	http.HandleFunc("/main/", helloWorldHandler)
-
-	// When the user requests with just the domain it pulls up index.html
-	//http.Handle("/", fs)
 
 	port := os.Getenv("PORT")
 	if port == "" {
